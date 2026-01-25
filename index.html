@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>أكاديمية د. مصطفى محمود ⚖️</title>
+    
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
+        body { font-family: 'Cairo', sans-serif; background-color: #050a14; color: white; margin: 0; scroll-behavior: smooth; }
+        .glass { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(15px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        @keyframes gradientMove { 0% { background-position: 0% 50%; } 100% { background-position: 200% 50%; } }
+        .moving-line { background: linear-gradient(90deg, #00d2ff, #ff8c00, #00d2ff); background-size: 200% auto; animation: gradientMove 3s linear infinite; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState } = React;
+
+        const BOT_TOKEN = "8059026799:AAHJYZej9ecO4GJ3PAGbtXI3EXKt9wStM_4";
+        const CHAT_ID = "6068331455";
+
+        const questionsDB = {
+            "صح وغلط": [
+                { id: 1, q: "Agathe va au stade pour jouer au foot.", options: ["صح", "غلط"], correct: "صح" },
+                { id: 2, q: "Arthur préfère faire du équitation.", options: ["صح", "غلط"], correct: "غلط" },
+                { id: 3, q: "كلمة 'Lycée' تعني مدرسة ثانوي.", options: ["صح", "غلط"], correct: "صح" },
+                { id: 4, q: "Enzo fait de la natation dans le club.", options: ["صح", "غلط"], correct: "صح" },
+                { id: 5, q: "Jeanne sait monter à cheval.", options: ["صح", "غلط"], correct: "صح" },
+                { id: 6, q: "Inès s'a couchée tard.", options: ["صح", "غلط"], correct: "غلط" },
+                { id: 7, q: "كلمة 'Boulanger' تعني جزار.", options: ["صح", "غلط"], correct: "غلط" },
+                { id: 201, q: "كلمة 'Gourmand' تعني شخص أكول يحب الأكل.", options: ["صح", "غلط"], correct: "صح" },
+                { id: 202, q: "كلمة 'Lycée' تعني مدرسة إعدادي.", options: ["صح", "غلط"], correct: "غلط" },
+                { id: 203, q: "كلمة 'Mignon' تعني لطيف أو جذاب.", options: ["صح", "غلط"], correct: "صح" },
+                { id: 204, q: "كلمة 'Bavard' تُطلق على الشخص كثير الكلام.", options: ["صح", "غلط"], correct: "صح" },
+                { id: 205, q: "كلمة 'Désordonné' تعني شخص منظم جداً.", options: ["صح", "غلط"], correct: "غلط" },
+                { id: 206, q: "كلمة 'Timide' تعني شخص خجول.", options: ["صح", "غلط"], correct: "صح" },
+                { id: 207, q: "كلمة 'Voisin' تعني جار.", options: ["صح", "غلط"], correct: "صح" },
+                { id: 501, q: "تستخدم 'parce que' للتعبير عن السبب وتعني 'لأن'.", options: ["صح", "غلط"], correct: "صح" },
+                { id: 502, q: "كلمة 'matin' مذكر وتأخذ أداة الإشارة 'ce'.", options: ["صح", "غلط"], correct: "صح" },
+                { id: 503, q: "الأشهر في اللغة الفرنسية تأخذ حرف الجر 'en'.", options: ["صح", "غلط"], correct: "صح" },
+                { id: 504, q: "وسيلة النقل 'bus' تأخذ حرف الجر 'en'.", options: ["صح", "غلط"], correct: "صح" },
+                { id: 505, q: "للتعيير عن التواجد في منزل شخص نستخدم 'chez'.", options: ["صح", "غلط"], correct: "صح" },
+                { id: 506, q: "كلمة 'tête' مؤنث ونقول 'à la tête'.", options: ["صح", "غلط"], correct: "صح" },
+                { id: 510, q: "الضمير 'lui' يستخدم كضمير مفعول غير مباشر للمفرد.", options: ["صح", "غلط"], correct: "صح" },
+                { id: 501, q: "تستخدم 'parce que' للتعبير عن السبب وتعني 'لأن'.", options: ["صح", "غلط"], correct: "صح" },
+{ id: 502, q: "كلمة 'matin' مذكر وتأخذ أداة الإشارة 'ce'.", options: ["صح", "غلط"], correct: "صح" },
+{ id: 503, q: "الأشهر في اللغة الفرنسية (مثل avril) تأخذ حرف الجر 'en'.", options: ["صح", "غلط"], correct: "صح" },
+{ id: 504, q: "وسيلة النقل 'bus' تأخذ حرف الجر 'en' فنقول 'en bus'.", options: ["صح", "غلط"], correct: "صح" },
+{ id: 505, q: "للتعيير عن التواجد في منزل شخص نستخدم حرف الجر 'chez'.", options: ["صح", "غلط"], correct: "صح" },
+{ id: 506, q: "كلمة 'tête' مؤنث ونقول 'à la tête'.", options: ["صح", "غلط"], correct: "صح" },
+{ id: 507, q: "نستخدم 'de l'' أمام الكلمات التي تبدأ بحرف متحرك مثل 'équitation'.", options: ["صح", "غلط"], correct: "صح" },
+{ id: 508, q: "الظرف 'beaucoup' يأتي بعده 'de' دائماً قبل الأسماء.", options: ["صح", "غلط"], correct: "صح" },
+{ id: 509, q: "فعل 'nager' هو النشاط المناسب للذهاب إلى 'piscine'.", options: ["صح", "غلط"], correct: "صح" },
+{ id: 510, q: "الضمير 'lui' يستخدم كضمير مفعول غير مباشر للمفرد.", options: ["صح", "غلط"], correct: "صح" }
+
+            ],
+            "اختياري": [
+                { id: 1, q: "Agathe va au ... pour jouer au foot.", options: ["piscine", "piste", "stade"], correct: "stade" },
+                { id: 2, q: "Arthur préfère faire ... équitation.", options: ["du", "de la", "de l'"], correct: "de l'" },
+                { id: 3, q: "Mes amies jouent au ...", options: ["danse", "jeux vidéo", "basket"], correct: "basket" },
+                { id: 4, q: "Les joueurs adoreنت ... équipe.", options: ["son", "sa", "leur"], correct: "leur" },
+                { id: 5, q: "David fait ses devoirs, ne ... parle pas !", options: ["le", "la", "lui"], correct: "lui" },
+                { id: 6, q: "Tu ... du lait au petit-déjeuner?", options: ["bois", "boit", "buvez"], correct: "bois" },
+                { id: 7, q: "Je ne peux pas aller au match, je ... aller chez le dentiste.", options: ["vient", "doit", "suis"], correct: "doit" },
+                { id: 8, q: "Manon va à la piscine, elle adore ...", options: ["courir", "lancer", "nager"], correct: "nager" },
+                { id: 301, q: "ما معنى كلمة 'Sac à dos'؟", options: ["حقيبة يد", "حقيبة ظهر", "كيس بلاستيك"], correct: "حقيبة ظهر" },
+                { id: 305, q: "ما معنى كلمة 'Quartier'؟", options: ["شارع", "مدينة", "حي سكنى"], correct: "حي سكنى" },
+                { id: 402, q: "Vous n'allez pas au parc ... vous avez du travail.", options: ["pourquoi", "parce que", "est-ce que"], correct: "parce que" },
+                { id: 417, q: "Il y a beaucoup ... fruits.", options: ["des", "de les", "de"], correct: "de" },
+                { id: 401, q: "Jeanne ... monter à cheval.", options: ["sais", "sait", "savons"], correct: "sait" },
+{ id: 402, q: "Vous n'allez pas au parc ... vous avez du travail.", options: ["pourquoi", "parce que", "est-ce que"], correct: "parce que" },
+{ id: 403, q: "Gabriel a fait un gâteau ... matin.", options: ["ce", "cet", "cette"], correct: "ce" },
+{ id: 404, q: "Je suis allé au Canada ... avril.", options: ["au", "en", "à l'"], correct: "en" },
+{ id: 405, q: "Elle ... à 19 h 30.", options: ["est arrivé", "est arrivée", "sont arrivées"], correct: "est arrived" },
+{ id: 406, q: "Timéo va à l'école ... bus.", options: ["en", "à", "au"], correct: "en" },
+{ id: 407, q: "Il n'y a plus de pain, tu peux passer chez ... ?", options: ["le boucher", "le boulanger", "le libraire"], correct: "le boulanger" },
+{ id: 408, q: "J'adore aller à la patinoire, j'... vais tous les samedi.", options: ["le", "en", "y"], correct: "y" },
+{ id: 409, q: "Enzo et Yann ... le métro.", options: ["prends", "prendre", "prennent"], correct: "prennent" },
+{ id: 410, q: "Nous avons dîné ... mon copain Gary.", options: ["y", "en", "chez"], correct: "chez" },
+{ id: 411, q: "Agathe va au ... pour jouer au foot.", options: ["piscine", "piste", "stade"], correct: "stade" },
+{ id: 412, q: "Arthur préfère faire ... équitation.", options: ["du", "de la", "de l'"], correct: "de l'" },
+{ id: 413, q: "Les joueurs adoreنت ... équipe.", options: ["son", "sa", "leur"], correct: "leur" },
+{ id: 414, q: "Je veux inviter Charlotte, je vais ... envoyer un message.", options: ["la", "lui", "le"], correct: "lui" },
+{ id: 415, q: "Tu veux venir au ciné samedi ... ?", options: ["dernier", "hier", "prochain"], correct: "prochain" },
+{ id: 416, q: "Manon va à la piscine, elle adore ...", options: ["courir", "lancer", "nager"], correct: "nager" },
+{ id: 417, q: "Il y a beaucoup ... fruits.", options: ["des", "de les", "de"], correct: "de" },
+{ id: 418, q: "Tu veux ... de fromage ?", options: ["très", "en", "un peu"], correct: "un peu" }
+
+            ]
+        };
+
+        const shuffleAndPick = (array) => {
+            const shuffled = [...array].sort(() => 0.5 - Math.random());
+            return shuffled.slice(0, 30);
+        };
+
+        function AcademyApp() {
+            const [view, setView] = useState('home');
+            const [showLogin, setShowLogin] = useState(false);
+            const [targetDept, setTargetDept] = useState('');
+            const [student, setStudent] = useState({ name: '', level: '' });
+            const [currentQIndex, setCurrentQIndex] = useState(0);
+            const [quizQuestions, setQuizQuestions] = useState([]);
+            const [answers, setAnswers] = useState({});
+            const [isFinished, setIsFinished] = useState(false);
+
+            const sendTelegram = async (msg) => {
+                try {
+                    await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ chat_id: CHAT_ID, text: msg })
+                    });
+                } catch(e) { console.error("Error"); }
+            };
+
+            const handleEnter = (dept) => {
+                setTargetDept(dept);
+                setShowLogin(true);
+            };
+
+            const finalizeLogin = () => {
+                if (!student.name.trim() || !student.level || student.level === "اختر الفرقة") {
+        alert("⚠️ فضلاً يا بطل.. أدخل اسمك الثلاثي واختر فرقتك للمتابعة!");
+        return;
+    }
+                
+                sendTelegram(`🚀 دخول جديد:\n👤 الطالب: ${student.name}\n📚 الفرقة: ${student.level}\n🎯 القسم: ${targetDept}`);
+                setShowLogin(false);
+                if (targetDept === 'شرح') setView('lessons');
+                else setView('exams');
+            };
+
+            const prepareQuiz = (type) => {
+                const quizType = type === 'صح وغلط' ? 'صح وغلط' : 'اختياري';
+                const allQuestions = questionsDB[quizType] || [];
+                const selected = shuffleAndPick(allQuestions); 
+                setQuizQuestions(selected);
+                setCurrentQIndex(0);
+                setAnswers({});
+                setIsFinished(false);
+                setView('quiz_mode');
+            };
+
+            const renderQuiz = () => {
+                const q = quizQuestions[currentQIndex];
+                if (isFinished) {
+                    return (
+                        <div className="max-w-2xl mx-auto glass p-8 rounded-[40px] text-right">
+                            <h2 className="text-2xl font-bold text-center text-orange-500 mb-6 underline">نتيجة الاختبار</h2>
+                            <div className="space-y-6 max-h-[400px] overflow-y-auto pl-4 border-b border-white/10 pb-4">
+                                {quizQuestions.map((item, idx) => (
+                                    <div key={idx} className={`p-4 rounded-2xl border ${answers[idx] === item.correct ? 'border-green-500/50 bg-green-500/10' : 'border-red-500/50 bg-red-500/10'}`}>
+                                        <p className="font-bold mb-2">{idx + 1}. {item.q}</p>
+                                        <p className="text-green-400 text-sm">الصحيح: {item.correct}</p>
+                                        <p className={answers[idx] === item.correct ? "text-green-400 text-sm" : "text-red-400 text-sm"}>إجابتك: {answers[idx] || "لم تحل"}</p>
+                                    </div>
+                                ))}
+                            </div>
+                            <button onClick={() => {setView('home'); setIsFinished(false);}} className="w-full mt-8 bg-orange-600 py-4 rounded-2xl font-black">عودة للرئيسية</button>
+                        </div>
+                    );
+                }
+
+                if (!q) return null;
+
+                return (
+                    <div className="max-w-2xl mx-auto glass p-8 rounded-[40px] relative overflow-hidden">
+                        <div className="absolute top-0 left-0 w-full h-1 moving-line"></div>
+                        <div className="flex justify-between items-center mb-6">
+                            <span className="text-blue-400 text-xs font-bold tracking-widest uppercase">{targetDept}</span>
+                            <span className="bg-white/10 px-4 py-1 rounded-full text-orange-500 font-black">
+                                {currentQIndex + 1} / {quizQuestions.length}
+                            </span>
+                        </div>
+                        <h3 className="text-xl font-bold text-center mb-10 leading-relaxed">{q.q}</h3>
+                        <div className="grid grid-cols-1 gap-4">
+                            {q.options.map((opt) => (
+                                <button key={opt} onClick={() => setAnswers({...answers, [currentQIndex]: opt})} 
+                                    className={`p-4 rounded-2xl border text-right transition-all ${answers[currentQIndex] === opt ? 'border-orange-500 bg-orange-500/20' : 'border-white/10 bg-white/5 hover:bg-white/10'}`}>
+                                    {opt}
+                                </button>
+                            ))}
+                        </div>
+                        <div className="flex gap-4 mt-12">
+                            <button disabled={currentQIndex === 0} onClick={() => setCurrentQIndex(prev => prev - 1)} className="flex-1 border border-white/20 py-3 rounded-xl disabled:opacity-30">السابق</button>
+                            {currentQIndex === quizQuestions.length - 1 ? (
+                                <button onClick={() => setIsFinished(true)} className="flex-1 bg-green-600 py-3 rounded-xl font-bold">إنهاء</button>
+                            ) : (
+                                <button onClick={() => setCurrentQIndex(prev => prev + 1)} className="flex-1 bg-blue-600 py-3 rounded-xl font-bold">التالي</button>
+                            )}
+                        </div>
+                    </div>
+                );
+            };
+
+            return (
+                <div className="min-h-screen p-4 md:p-10 flex flex-col">
+                    <div className="text-center mb-10">
+                        <div className="text-orange-500 text-4xl font-mono font-bold mb-4">{"< / >"}</div>
+                        <h1 className="text-3xl md:text-5xl font-black bg-gradient-to-r from-white to-orange-500 bg-clip-text text-transparent cursor-pointer" onClick={() => setView('home')}>
+                            أكاديمية د. مصطفى محمود ⚖️
+                        </h1>
+                    </div>
+
+                    <main className="flex-grow">
+                        {view === 'home' && (
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto mt-10">
+                                <Card title="عرض الشرح والملازم" icon="fa-chalkboard-teacher" color="#00d2ff" onClick={() => handleEnter('شرح')} />
+                                <Card title="اختبارات صح وغلط" icon="fa-check-double" color="#2ecc71" onClick={() => handleEnter('صح وغلط')} />
+                                <Card title="قسم الاختياري" icon="fa-list-ol" color="#ff8c00" onClick={() => handleEnter('اختياري')} />
+                            </div>
+                        )}
+
+                        {view === 'exams' && (
+                            <div className="max-w-6xl mx-auto">
+                                <button onClick={() => setView('home')} className="mb-8 text-orange-500 border border-orange-500 px-4 py-2 rounded-lg">رجوع</button>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+                                    {[1, 2, 3, 4, 5].map(num => (
+                                        <div key={num} onClick={() => prepareQuiz(targetDept)} className="glass p-6 rounded-2xl relative overflow-hidden text-center cursor-pointer hover:scale-105 transition">
+                                            <div className="absolute top-0 left-0 w-full h-1 moving-line"></div>
+                                            <h4 className="font-bold mb-4">الاختبار {num}</h4>
+                                            <button className="bg-blue-600 text-[10px] py-2 px-4 rounded-full">ابدأ الاختبار</button>
+                                        </div>
+                                    ))}
+                                </div>
+                                <div className="mt-12 p-8 glass rounded-3xl text-center border-dashed border-2 border-gray-600">
+                                    <i className="fas fa-file-pdf text-4xl mb-4 text-red-500"></i>
+                                    <h3 className="text-xl font-bold">بنك الأسئلة (PDF)</h3>
+                                    <p className="text-gray-400 mb-4">سيتم رفع كتب الأسئلة هنا قريباً</p>
+                                    <a href="#" className="text-blue-400 underline">رابط التحميل المباشر</a>
+                                </div>
+                            </div>
+                        )}
+
+                        {view === 'quiz_mode' && renderQuiz()}
+
+                        {view === 'lessons' && (
+                            <div className="max-w-5xl mx-auto">
+                                <button onClick={() => setView('home')} className="mb-8 text-orange-500 border border-orange-500 px-4 py-2 rounded-lg">رجوع</button>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div className="glass p-4 rounded-2xl">
+                                        <h4 className="mb-4 font-bold border-r-4 border-orange-500 pr-2">فيديوهات الشرح</h4>
+                                        <div className="bg-black aspect-video rounded-xl mb-4 flex items-center justify-center border border-white/5 text-gray-500">Video Placeholder</div>
+                                    </div>
+                                    <div className="flex flex-col gap-6">
+                                        <div className="glass p-6 rounded-2xl flex items-center justify-between">
+                                            <div className="text-right"><h4 className="font-bold">ملزمات الشرح PDF</h4><p className="text-xs text-gray-500">Google Drive Link</p></div>
+                                            <a href="#" className="bg-green-600 p-3 rounded-full"><i className="fas fa-download"></i></a>
+                                        </div>
+                                        <div className="glass p-6 rounded-2xl flex items-center justify-between border-r-4 border-blue-500">
+                                            <div className="text-right"><h4 className="font-bold">الامتحانات السابقة</h4><p className="text-xs text-gray-500">Archive</p></div>
+                                            <button className="bg-blue-600 p-3 rounded-full"><i className="fas fa-file-invoice"></i></button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                    </main>
+
+                    <footer className="text-center mt-20 border-t border-white/5 pt-10 pb-10">
+                        <div className="flex justify-center gap-6 mb-6">
+                            <a href="#" className="text-blue-500 text-2xl hover:scale-125 transition"><i className="fab fa-facebook-f"></i></a>
+                            <a href="#" className="text-blue-400 text-2xl hover:scale-125 transition"><i className="fab fa-telegram-plane"></i></a>
+                            <a href="#" className="text-green-500 text-2xl hover:scale-125 transition"><i className="fab fa-whatsapp"></i></a>
+                        </div>
+                        <p className="text-sm font-light tracking-widest text-gray-500 uppercase">
+                            DEVELOPED BY <span className="text-orange-500 font-bold">OMAR ABDEL-TAWAB SALEH</span>
+                        </p>
+                    </footer>
+
+                    {showLogin && (
+                        <div className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-4">
+                            <div className="bg-[#0a192f] border-2 border-orange-500 p-8 rounded-[40px] w-full max-w-md shadow-2xl">
+                                <h3 className="text-xl font-bold text-center text-orange-500 mb-6 italic">تسجيل الدخول</h3>
+                                <input onChange={(e) => setStudent({...student, name: e.target.value})} type="text" placeholder="الاسم ثلاثي" className="w-full bg-white/5 border border-white/10 p-4 rounded-2xl mb-4 text-white outline-none focus:border-orange-500" />
+                                <select onChange={(e) => setStudent({...student, level: e.target.value})} className="w-full bg-white/5 border border-white/10 p-4 rounded-2xl mb-6 text-gray-400 outline-none">
+                                    <option value="">اختر الفرقة</option>
+                                    <option value="الأولى">الأولى</option>
+                                    <option value="الثانية">الثانية</option>
+                                       <option value="الثالثة">الفرقة الثالثة</option>
+    <option value="الرابعة">الفرقة الرابعة</option>
+                                </select>
+                                <button onClick={finalizeLogin} className="w-full bg-orange-600 py-4 rounded-2xl font-black">دخول</button>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
+        function Card({ title, icon, color, onClick }) {
+            return (
+                <div onClick={onClick} className="glass p-10 rounded-[40px] text-center cursor-pointer relative overflow-hidden group hover:-translate-y-4 transition-all duration-500">
+                    <div className="absolute top-0 left-0 w-full h-1.5 moving-line"></div>
+                    <i className={`fas ${icon} text-5xl mb-6`} style={{ color }}></i>
+                    <h3 className="text-xl font-bold mb-4">{title}</h3>
+                    <div className="text-xs text-gray-400 group-hover:text-orange-500 transition">Click to Enter</div>
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<AcademyApp />);
+    </script>
+</body>
+</html>
+
