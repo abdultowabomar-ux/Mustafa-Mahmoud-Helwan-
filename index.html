@@ -182,18 +182,10 @@
     const CHAT_ID = "6068331455";
 
         // قائمة الأكواد الـ 25 المسموح لها بالدخول
-        const VALID_CODES = [
-    "DR101", "DR102", "DR103", "DR104", "DR105", "DR106", "DR107", "DR108", "DR109", "DR110",
-    "DR111", "DR112", "DR113", "DR114", "DR115", "DR116", "DR117", "DR118", "DR119", "DR120",
-    "DR121", "DR122", "DR123", "DR124", "DR125", "DR126", "DR127", "DR128", "DR129", "DR130",
-    "DR131", "DR132", "DR133", "DR134", "DR135", "DR136", "DR137", "DR138", "DR139", "DR140",
-    "DR141", "DR142", "DR143", "DR144", "DR145", "DR146", "DR147", "DR148", "DR149", "DR150",
-    "DR151", "DR152", "DR153", "DR154", "DR155", "DR156", "DR157", "DR158", "DR159", "DR160",
-    "DR161", "DR162", "DR163", "DR164", "DR165", "DR166", "DR167", "DR168", "DR169", "DR170",
-    "DR171", "DR172", "DR173", "DR174", "DR175", "DR176", "DR177", "DR178", "DR179", "DR180",
-    "DR181", "DR182", "DR183", "DR184", "DR185", "DR186", "DR187", "DR188", "DR189", "DR190",
-    "DR191", "DR192", "DR193", "DR194", "DR195", "DR196", "DR197", "DR198", "DR199", "DR200","DMR3", "DMR4", "DMR5", "DMR6", "DMR7", "DMR8", "DMR9", "DMR10", "DMR11", "DMR12", "DMR13", "DMR14", "DMR15", "DMR16", "DMR17", "DMR18", "DMR19", "DMR20", "DMR21", "DMR22", "DMR23", "DMR24", "DMR25", "DMR26", "DMR27", "DMR28", "DMR29", "DMR30", "DMR31", "DMR32", "DMR33", "DMR34", "DMR35", "DMR36", "DMR37", "DMR38", "DMR39", "DMR40", "DMR41", "DMR42", "DMR43", "DMR44", "DMR45", "DMR46", "DMR47", "DMR48", "DMR49", "DMR50", "DMR51", "DMR52", "DMR53", "DMR54", "DMR55", "DMR56", "DMR57", "DMR58", "DMR59", "DMR60", "DMR61", "DMR62", "DMR63", "DMR64", "DMR65", "DMR66", "DMR67", "DMR68", "DMR69", "DMR70", "DMR71", "DMR72", "DMR73", "DMR74", "DMR75", "DMR76", "DMR77", "DMR78", "DMR79", "DMR80", "DMR81", "DMR82", "DMR83", "DMR84", "DMR85", "DMR86", "DMR87", "DMR88", "DMR89", "DMR90", "DMR91", "DMR92", "DMR93", "DMR94", "DMR95", "DMR96", "DMR97", "DMR98", "DMR99"
-];
+        // توليد 200 كود تبدأ من xmw1 وحتى xmw200
+// توليد 200 كود تبدأ من xmw1 وحتى xmw200
+const VALID_CODES = Array.from({ length: 200 }, (_, i) => `xmw${i + 1}`);
+
 
 
         const questionsDB = {
@@ -280,17 +272,30 @@
             const [targetDept, setTargetDept] = useState('');
        const [isLoading, setIsLoading] = useState(true);
 const [loadingPhase, setLoadingPhase] = useState('encrypting');
+const [isFreeMode, setIsFreeMode] = useState(false);
+
 
 const [student, setStudent] = useState({ name: '', level: '', phone: '', code: '', university: '' });
 const [showAppModal, setShowAppModal] = useState(false);
 
 const [showDevCard, setShowDevCard] = useState(false);
 useEffect(() => {
+    // محاولة استعادة بيانات الطالب من ذاكرة المتصفح
+    const savedStudent = localStorage.getItem('academy_student_data');
+    if (savedStudent) {
+        const parsedData = JSON.parse(savedStudent);
+        setStudent(parsedData);
+        // لو البيانات كاملة، دخله على طول للقسم اللي كان فيه أو الصفحة الرئيسية
+        setView('home'); 
+    }
+
+    // الـ Loading Phases القديمة بتاعتك
     setTimeout(() => setLoadingPhase('logo-entry'), 3000);
     setTimeout(() => setLoadingPhase('logo-exit'), 6000);
     setTimeout(() => {
         setIsLoading(false);
-        setShowDevCard(true); // إظهار بطاقة المطور فوراً بعد التحميل
+        // لو الطالب مسجل دخول فعلاً، مش لازم نظهر كارت المطور كل مرة
+        if(!savedStudent) setShowDevCard(true);
     }, 7500);
 }, []);
 
@@ -300,74 +305,141 @@ useEffect(() => {
             const [answers, setAnswers] = useState({});
             const [isFinished, setIsFinished] = useState(false);
 
-            const sendTelegram = async (msg) => {
-                try {
-                    await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ chat_id: CHAT_ID, text: msg })
-                    });
-                } catch(e) { console.error("Error sending to Telegram"); }
-            };
+          const sendTelegram = async (message) => {
+    try {
+        await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                chat_id: CHAT_ID, 
+                text: `🔔 تنبيه نشاط:\n${message}`,
+                parse_mode: "HTML" // اختياري لو عايز تنسق الخط
+            })
+        });
+    } catch(e) { console.error("Telegram Log Error"); }
+};
 
-            const handleEnter = (dept) => {
-                setTargetDept(dept);
-                setShowLogin(true);
-            };
+
+     const handleEnter = (dept) => {
+    setTargetDept(dept);
+    const savedData = localStorage.getItem('academy_student_data');
+    const isFreeDept = (dept === 'صح وغلط' || dept === 'اختياري');
+    
+    setIsFreeMode(isFreeDept); // تحديد إذا كان القسم مجاني أم لا
+
+    if (savedData) {
+        const parsed = JSON.parse(savedData);
+        setStudent(parsed);
+        
+        // لو داخل شرح ومعندوش كود مسجل، افتح اللوجن يطلب الكود
+        if (dept === 'شرح' && !parsed.code) {
+            setShowLogin(true);
+        } else {
+            // لو معاه كود أو داخل قسم مجاني، يدخل فوراً
+            setView(dept === 'شرح' ? 'lessons' : 'exams');
+        }
+    } else {
+        // أول مرة يدخل، لازم يملأ بياناته
+        setShowLogin(true);
+    }
+};
+
 
          
         // ... الحالات (States) الموجودة مسبقاً ...
+const finalizeLogin = async () => {
+    const { name, level, phone, code, university } = student;
+
+    // 1. التحقق من البيانات الأساسية (إلزامية للجميع)
+    if (!name.trim() || !level || !phone || !university) {
+        alert("⚠️ فضلاً يا بطل.. أكمل جميع البيانات للمتابعة!");
+        return;
+    }
+
+    // 2. منطق التحقق (كود التفعيل vs الدخول المجاني)
+    if (!isFreeMode) {
+        // التحقق من وجود الكود وصحته في القائمة المحلية
+      // تعديل بسيط داخل finalizeLogin لزيادة الدقة
+if (!code || !VALID_CODES.includes(code.trim().toLowerCase())) { 
+    // ... 
+
+
+            alert("❌ كود التفعيل غير صحيح أو مطلوب للوصول لهذا القسم!");
+            return;
+        }
+        
+        // بروتوكول حماية الجهاز وربطه بالكود في Firebase
+        let deviceIdentifier = localStorage.getItem('academy_device_id');
+        if (!deviceIdentifier) {
+            deviceIdentifier = 'dev_' + Math.random().toString(36).substr(2, 9);
+            localStorage.setItem('academy_device_id', deviceIdentifier);
+        }
+        
+        try {
+            const codeRef = db.ref('academy_codes/' + code);
+            const snapshot = await codeRef.once('value');
+            const data = snapshot.val();
+
+            // منع استخدام الكود على أكثر من جهاز
+            if (data && data.deviceId !== deviceIdentifier) {
+                alert("⚠️ هذا الكود مفعل بالفعل على جهاز آخر!");
+                return;
+            }
+
+            // إذا كان الكود مستخدماً لأول مرة، نسجله في قاعدة البيانات
+            if (!data) {
+                await codeRef.set({
+                    isUsed: true,
+                    deviceId: deviceIdentifier,
+                    studentName: name,
+                    studentPhone: phone,
+                    level: level,
+                    university: university,
+                    useDate: new Date().toLocaleString('ar-EG')
+                });
+            }
+        } catch (error) {
+            console.error("Firebase Error:", error);
+            alert("⚠️ عذراً، حدث خطأ في الاتصال بالخادم. حاول مجدداً.");
+            return;
+        }
+    }
+
+    // 3. حفظ جلسة الطالب محلياً (لو تم مسح الكاش سيطلب البيانات مرة أخرى)
+    localStorage.setItem('academy_student_data', JSON.stringify(student));
+    
+    // 4. إرسال تقرير الدخول إلى تليجرام (Log)
+    const accessType = isFreeMode ? "🆓 دخول مجاني" : "🔑 دخول بكود تفعيل";
+    const logMessage = `
+🔔 **تنبيه دخول جديد**
+━━━━━━━━━━━━
+🎯 **النوع:** ${accessType}
+👤 **الطالب:** ${name}
+📱 **الهاتف:** ${phone}
+🏛️ **الجامعة:** ${university}
+🎓 **الفرقة:** ${level}
+🔑 **الكود:** ${isFreeMode ? "بدون كود" : code}
+📍 **القسم المستهدف:** ${targetDept}
+━━━━━━━━━━━━`;
+
+    sendTelegram(logMessage);
+
+    // 5. التوجيه النهائي
+    alert(isFreeMode ? "✅ استمتع بالاختبار يا بطل!" : "✅ تم تفعيل الكود بنجاح.. نورت الأكاديمية");
+    
+    setShowLogin(false);
+    
+    // التوجيه بناءً على القسم
+    if (targetDept === 'شرح') {
+        setView('lessons');
+    } else {
+        setView('exams');
+    }
+};
 
         // 2. استبدل دالة finalizeLogin القديمة بهذه النسخة المحدثة
-        const finalizeLogin = async () => {
-            const { name, level, phone, code } = student;
-            if (!name.trim() || !level || !phone || !code) {
-                alert("⚠️ فضلاً يا بطل.. أكمل جميع البيانات للمتابعة!");
-                return;
-            }
-
-            if (!VALID_CODES.includes(code)) {
-                alert("❌ كود التفعيل غير صحيح!");
-                return;
-            }
-
-            let deviceIdentifier = localStorage.getItem('academy_device_id');
-            if (!deviceIdentifier) {
-                deviceIdentifier = 'dev_' + Math.random().toString(36).substr(2, 9);
-                localStorage.setItem('academy_device_id', deviceIdentifier);
-            }
-
-            try {
-                const codeRef = db.ref('academy_codes/' + code);
-                const snapshot = await codeRef.once('value');
-                const data = snapshot.val();
-
-                if (data && data.deviceId !== deviceIdentifier) {
-                    alert("⚠️ هذا الكود مستخدم على جهاز آخر!");
-                    return;
-                }
-
-                if (!data) {
-                    await codeRef.set({
-                        isUsed: true,
-                        deviceId: deviceIdentifier,
-                        studentName: name,
-                        studentPhone: phone,
-                        level: level,
-                        useDate: new Date().toLocaleString('ar-EG')
-                    });
-                }
-                   
-
-
-                sendTelegram(`🚀 دخول ناجح:\n👤 الطالب: ${name}\n🔑 الكود: ${code}\n🎯 القسم: ${targetDept}`);
-                setShowLogin(false);
-                targetDept === 'شرح' ? setView('lessons') : setView('exams');
-            } catch (e) {
-                console.error(e);
-                alert("خطأ في الاتصال بقاعدة البيانات! تأكد من إعدادات الـ Rules.");
-            }
-        }; // تأكد من وجود هذا القوس لإغلاق الدالة
+       
+ // تأكد من وجود هذا القوس لإغلاق الدالة
             const prepareQuiz = (type) => {
                 const quizType = (type === 'صح وغلط' || targetDept === 'صح وغلط') ? 'صح وغلط' : 'اختياري';
                 const allQuestions = questionsDB[quizType] || [];
@@ -671,47 +743,48 @@ useEffect(() => {
 
 
                             
-        <Card 
-            title="تحميل التطبيق وتواصل معنا" 
-            icon="fa-mobile-screen-button" 
-            color="#ff4757" 
-            onClick={() => setShowDevCard(true)} 
-        />
-        {showAppModal && (
+  <Card 
+        title="تطبيق الأكاديمية  وتواصل معنا" 
+        icon="fa-mobile-screen-button" 
+        color="#ff4757" 
+        onClick={() => setShowDevCard(true)} 
+    />
+       {showAppModal && (
     <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/80 backdrop-blur-xl animate-fadeIn">
-        <div className="glass p-8 rounded-[40px] border border-blue-500/30 max-w-md w-full relative overflow-hidden shadow-[0_0_50px_rgba(59,130,246,0.2)]">
+        <div className="glass p-8 rounded-[40px] border border-blue-500/30 max-w-md w-full relative overflow-hidden shadow-[0_0_50px_rgba(59,130,246,0.3)]">
             
             {/* زر الإغلاق */}
-            <button onClick={() => setShowAppModal(false)} className="absolute top-6 left-6 text-gray-500 hover:text-white">
+            <button onClick={() => setShowAppModal(false)} className="absolute top-6 left-6 text-gray-500 hover:text-white transition-colors">
                 <i className="fas fa-times-circle text-2xl"></i>
             </button>
 
             <div className="text-center">
-                <div className="w-24 h-24 bg-gradient-to-br from-blue-600 to-blue-400 rounded-3xl mx-auto mb-6 flex items-center justify-center shadow-lg rotate-3 group-hover:rotate-0 transition">
-                    <i className="fas fa-robot text-5xl text-white"></i>
+                {/* أيقونة أندرويد متوهجة */}
+                <div className="w-24 h-24 bg-gradient-to-br from-green-500 to-blue-600 rounded-3xl mx-auto mb-6 flex items-center justify-center shadow-lg animate-pulse">
+                    <i className="fab fa-android text-5xl text-white"></i>
                 </div>
                 
-                <h3 className="text-2xl font-black text-white mb-1 text-right">تحميل تطبيق الأكاديمية</h3>
-                <p className="text-blue-400 text-xs font-mono mb-6 text-right uppercase tracking-tighter">Version 1.0.2 - Secured by Omar</p>
+                <h3 className="text-2xl font-black text-white mb-1 text-right">تحميل التطبيق الرسمي</h3>
+                <p className="text-blue-400 text-xs font-mono mb-6 text-right uppercase tracking-tighter">Dr.Mostafa.Mahmoud.Academy_1.0.apk</p>
 
-                {/* زر التحميل الكبير */}
-                <a href="" download className="block w-full bg-blue-600 hover:bg-blue-500 text-white py-5 rounded-2xl font-black text-xl mb-8 shadow-xl shadow-blue-600/20 transition-all active:scale-95">
-                    <i className="fas fa-cloud-download-alt ml-2"></i> تحميل APK الآن
+                {/* زر التحميل المباشر - تأكد من وضع الملف بنفس الاسم في نفس فولدر الموقع */}
+                <a href="Dr.Mostafa.Mahmoud.Academy_1.0.apk" download className="block w-full bg-gradient-to-r from-blue-600 to-blue-400 hover:from-blue-500 hover:to-blue-300 text-white py-5 rounded-2xl font-black text-xl mb-4 shadow-xl shadow-blue-600/30 transition-all active:scale-95 text-center">
+                    <i className="fas fa-cloud-download-alt ml-2"></i> تحميل ملف الـ APK
                 </a>
 
-                {/* روابط التواصل */}
-                <div className="grid grid-cols-3 gap-4 border-t border-white/10 pt-6">
-                    <a href="رابط_فيسبوك" className="flex flex-col items-center gap-2 text-gray-400 hover:text-blue-500 transition">
-                        <div className="w-12 h-12 rounded-xl bg-white/5 flex items-center justify-center border border-white/10"><i className="fab fa-facebook-f"></i></div>
-                        <span className="text-[10px]">فيسبوك</span>
+                <p className="text-[10px] text-gray-500 mb-8 leading-relaxed">
+                    * ملاحظة: بعد التحميل، قم بتثبيت التطبيق وادخل بكود التفعيل الخاص بك لمشاهدة كافة المحاضرات بدون قيود.
+                </p>
+
+                {/* روابط الدعم الفني تحت التحميل */}
+                <div className="grid grid-cols-2 gap-4 border-t border-white/10 pt-6">
+                    <a href="https://wa.me/201146681064" target="_blank" className="flex items-center justify-center gap-2 text-green-500 bg-green-500/5 py-3 rounded-xl border border-green-500/20 hover:bg-green-500/10 transition">
+                        <i className="fab fa-whatsapp"></i>
+                        <span className="text-xs font-bold">حجز كود</span>
                     </a>
-                    <a href="https://wa.me/2010xxxxxxxx" className="flex flex-col items-center gap-2 text-gray-400 hover:text-green-500 transition">
-                        <div className="w-12 h-12 rounded-xl bg-white/5 flex items-center justify-center border border-white/10"><i className="fab fa-whatsapp"></i></div>
-                        <span className="text-[10px]">واتساب</span>
-                    </a>
-                    <a href="رابط_موقعك" className="flex flex-col items-center gap-2 text-gray-400 hover:text-orange-500 transition">
-                        <div className="w-12 h-12 rounded-xl bg-white/5 flex items-center justify-center border border-white/10"><i className="fas fa-globe"></i></div>
-                        <span className="text-[10px]">موقعي</span>
+                    <a href="https://www.facebook.com/share/1CnzgXhrT2/" target="_blank" className="flex items-center justify-center gap-2 text-blue-400 bg-blue-400/5 py-3 rounded-xl border border-blue-400/20 hover:bg-blue-400/10 transition">
+                        <i className="fab fa-facebook-messenger"></i>
+                        <span className="text-xs font-bold">دعم فني</span>
                     </a>
                 </div>
             </div>
@@ -720,13 +793,32 @@ useEffect(() => {
 )}
 
 
-        
-        {/* الكروت القديمة */}
-        <Card title="عرض الشرح والملازم" icon="fa-chalkboard-teacher" color="#00d2ff" onClick={() => handleEnter('شرح')} />
-        <Card title="اختبارات صح وغلط" icon="fa-check-double" color="#2ecc71" onClick={() => handleEnter('صح وغلط')} />
-        
-        <Card title="قسم الاختياري" icon="fa-list-ol" color="#ff8c00" onClick={() => handleEnter('اختياري')} />
-    </div>
+         { /* كارت الشرح (محمي) */ }
+  <Card 
+        title="عرض الشرح والملازم" 
+        icon="fa-chalkboard-teacher" 
+        color="#00d2ff" 
+        onClick={() => handleEnter('شرح')} 
+    />
+  
+  { /* كارت صح وغلط (مجاني) */ }
+  <Card 
+        title="اختبارات صح وغلط" 
+        icon="fa-check-double" 
+        color="#2ecc71" 
+        onClick={() => handleEnter('صح وغلط')} 
+        isFree={true} 
+    />
+  
+  { /* كارت الاختياري (مجاني) */ }
+  <Card 
+        title="قسم الاختياري" 
+        icon="fa-list-ol" 
+        color="#ff8c00" 
+        onClick={() => handleEnter('اختياري')} 
+        isFree={true} 
+    /> <
+  /div>
 )}
 
 
@@ -748,16 +840,15 @@ useEffect(() => {
 
                         {view === 'quiz_mode' && renderQuiz()}
 
-                                    {view === 'lessons' && (
-    <div className="max-w-6xl mx-auto relative min-h-screen"> 
+              {view === 'lessons' && (
+    <div className="max-w-6xl mx-auto relative min-h-screen animate-fadeIn"> 
         
-        {/* 🛡️ رادار الحماية الأمني العائم - ضعه هنا بالضبط */}
+        {/* 🛡️ رادار الحماية الأمني العائم (لإعطاء هيبة للنسخة) */}
         {student.name && (
-            <div className="security-radar opacity-50 flex flex-col items-center justify-center pointer-events-none select-none">
-                <span className="text-white font-black text-lg shadow-lg">{student.name}</span>
+            <div className="security-radar opacity-30 flex flex-col items-center justify-center pointer-events-none select-none">
+                <span className="text-white font-black text-lg">{student.name}</span>
                 <span className="text-orange-500 font-black text-2xl tracking-tighter">{student.phone}</span>
-                <span className="text-blue-400 text-[10px] font-mono mt-1 bg-black/40 px-2 rounded-full">ID: {student.code}</span>
-                <span className="text-[7px] text-gray-500 uppercase mt-1">Property of Dr. Mostafa Mahmoud</span>
+                <span className="text-blue-400 text-[10px] font-mono mt-1 bg-black/40 px-2 rounded-full">PREVIEW MODE</span>
             </div>
         )}
 
@@ -765,85 +856,83 @@ useEffect(() => {
             <i className="fas fa-chevron-right ml-2"></i> رجوع للقائمة الرئيسية
         </button>
         
+        {/* رسالة توضيحية علوية */}
+        <div className="mb-10 p-4 bg-orange-500/10 border border-orange-500/30 rounded-2xl text-center">
+            <p className="text-orange-500 font-bold animate-pulse">
+                ⚠️ هذه نسخة معاينة فقط.. لمشاهدة المحاضرات بجودة عالية وبدون تقطيع حمل التطبيق الرسمي.
+            </p>
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 relative z-10">
-            {/* المحاضرة الأولى */}
-            <div className="glass p-4 rounded-3xl relative overflow-hidden group">
+            
+            {/* --- كارت فيديو استعراضي 1 --- */}
+            <div className="glass p-4 rounded-3xl relative overflow-hidden group cursor-pointer" onClick={() => setShowAppModal(true)}>
                 <div className="absolute top-0 right-0 w-1 h-full bg-blue-500"></div>
                 <h4 className="mb-4 font-bold pr-2 flex items-center text-white/90">
-                    <i className="fas fa-video ml-2 text-blue-500"></i> المحاضرة الأولى (تأسيس)
+                    <i className="fas fa-video ml-2 text-blue-500"></i> المحاضرة الأولى (تأسيس المنهج)
                 </h4>
-                <div className="relative aspect-video rounded-xl overflow-hidden border border-white/10 shadow-2xl">
-                    <iframe 
-                        src="https://drive.google.com/file/d/1VXQEdkFRK5RL_pyr0PtPyAvv1C_rj4yd/preview" 
-                        className="absolute inset-0 w-full h-full"
-                        allowFullScreen>
-                    </iframe>
+                <div className="relative aspect-video rounded-xl overflow-hidden border border-white/10 shadow-2xl bg-[#0a1120] flex items-center justify-center group">
+                    {/* صورة وهمية للفيديو */}
+                    <img src="https://images.unsplash.com/photo-1509062522246-3755977927d7?q=80&w=1000&auto=format&fit=crop" className="absolute inset-0 w-full h-full object-cover opacity-40 group-hover:scale-110 transition-transform duration-700" />
+                    <div className="relative z-10 flex flex-col items-center">
+                        <div className="w-16 h-16 bg-orange-600 rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(234,88,12,0.6)] group-hover:scale-125 transition-all">
+                            <i className="fas fa-play text-white ml-1"></i>
+                        </div>
+                        <span className="mt-4 text-xs font-bold text-white/60 bg-black/50 px-3 py-1 rounded-full backdrop-blur-md">إضغط للمشاهدة في التطبيق</span>
+                    </div>
                 </div>
             </div>
 
-            {/* المحاضرة الثانية */}
-            <div className="glass p-4 rounded-3xl relative overflow-hidden group">
+            {/* --- كارت فيديو استعراضي 2 --- */}
+            <div className="glass p-4 rounded-3xl relative overflow-hidden group cursor-pointer" onClick={() => setShowAppModal(true)}>
                 <div className="absolute top-0 right-0 w-1 h-full bg-orange-500"></div>
                 <h4 className="mb-4 font-bold pr-2 flex items-center text-white/90">
-                    <i className="fas fa-video ml-2 text-orange-500"></i> المحاضرة الثانية (جديد 🆕)
+                    <i className="fas fa-video ml-2 text-orange-500"></i> المحاضرة الثانية (قواعد اللغة)
                 </h4>
-                <div className="relative aspect-video rounded-xl overflow-hidden border border-white/10 shadow-2xl">
-                    <iframe 
-                        src="https://drive.google.com/file/d/1sxWK5mPJAnyFhWOYwd_f1gIGnWS7ZBTb/preview" 
-                        className="absolute inset-0 w-full h-full"
-                        allowFullScreen>
-                    </iframe>
-                </div>
-            </div>
-            
-            {/* المحاضرة الخاصة بحل أسئلة الامتحانات */}
-            <div className="glass p-4 rounded-3xl relative overflow-hidden group md:col-span-2">
-                <div className="absolute top-0 right-0 w-1 h-full bg-green-500"></div>
-                <h4 className="mb-4 font-bold pr-2 flex items-center text-white/90">
-                    <i className="fas fa-graduation-cap ml-2 text-green-500"></i> 
-                    فيديوهات حل أسئلة الامتحانات السابقة 📚✍️
-                </h4>
-                <div className="relative aspect-video rounded-xl overflow-hidden border border-white/10 shadow-2xl">
-                    <iframe 
-                        src="https://drive.google.com/file/d/1wqXzxEGeRvlqaOb8TMdkcW-6H35AnXJf/preview" 
-                        className="absolute inset-0 w-full h-full"
-                        allowFullScreen>
-                    </iframe>
+                <div className="relative aspect-video rounded-xl overflow-hidden border border-white/10 shadow-2xl bg-[#0a1120] flex items-center justify-center group">
+                    <img src="https://images.unsplash.com/photo-1434030216411-0b793f4b4173?q=80&w=1000&auto=format&fit=crop" className="absolute inset-0 w-full h-full object-cover opacity-40 group-hover:scale-110 transition-transform duration-700" />
+                    <div className="relative z-10 flex flex-col items-center">
+                        <div className="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(37,99,235,0.6)] group-hover:scale-125 transition-all">
+                            <i className="fas fa-lock text-white"></i>
+                        </div>
+                        <span className="mt-4 text-xs font-bold text-white/60 bg-black/50 px-3 py-1 rounded-full backdrop-blur-md">المحتوى مقفل.. حمل التطبيق</span>
+                    </div>
                 </div>
             </div>
 
-            {/* قسم الملازم PDF */}
-            <div className="glass p-6 rounded-3xl flex items-center justify-between border border-green-500/20 group">
+            {/* قسم الملازم PDF (مفعل للتحميل كـ هدية للطالب) */}
+            <div className="glass p-6 rounded-3xl flex items-center justify-between border border-green-500/20 group cursor-pointer" onClick={() => setShowAppModal(true)}>
                 <div className="text-right">
-                    <h4 className="font-bold text-lg text-green-400"><i className="fas fa-file-pdf ml-2"></i> ملزمات الشرح PDF</h4>
-                    <p className="text-xs text-gray-500">اضغط للتحميل المباشر</p>
+                    <h4 className="font-bold text-lg text-green-400"><i className="fas fa-file-pdf ml-2"></i> تحميل مذكرات الشرح كاملة</h4>
+                    <p className="text-xs text-gray-500">تحتاج لتطبيق الأكاديمية لفتح الملفات</p>
                 </div>
-                <a href="https://drive.google.com/file/d/1TDixq0P-0ANU3u6RuU66i1HQKWDSawUo/view?usp=drivesdk" className="bg-green-600 p-3 rounded-full text-white hover:scale-110 transition shadow-lg shadow-green-600/20">
+                <div className="bg-green-600 p-3 rounded-full text-white hover:rotate-12 transition">
                     <i className="fas fa-download"></i>
-                </a>
+                </div>
             </div>
 
-            {/* قسم الامتحانات السابقة */}
-            <div className="glass p-6 rounded-3xl flex items-center justify-between border border-purple-500/20 group">
+            {/* قسم تواصل سريع */}
+            <div className="glass p-6 rounded-3xl flex items-center justify-between border border-purple-500/20 group cursor-pointer" onClick={() => window.open('https://wa.me/201146681064', '_blank')}>
                 <div className="text-right">
-                    <h4 className="font-bold text-lg text-purple-400"><i className="fas fa-history ml-2"></i> أرشيف الامتحانات السابقة</h4>
-                    <p className="text-xs text-gray-500">نماذج امتحانات السنوات الماضية</p>
+                    <h4 className="font-bold text-lg text-purple-400"><i className="fas fa-headset ml-2"></i> الدعم الفني وحجز الأكواد</h4>
+                    <p className="text-xs text-gray-500">تواصل مباشرة مع د. مصطفى</p>
                 </div>
-                <button className="bg-purple-600 p-3 rounded-full text-white hover:scale-110 transition shadow-lg shadow-purple-600/20">
-                    <i className="fas fa-file-signature"></i>
-                </button>
+                <div className="bg-purple-600 p-3 rounded-full text-white hover:scale-110 transition">
+                    <i className="fab fa-whatsapp"></i>
+                </div>
             </div>
         </div>
 
-        {/* تنبيه للطالب */}
-        <div className="mt-10 p-6 glass border-orange-500/20 rounded-3xl text-center relative z-10">
-            <p className="text-orange-500 text-sm italic font-bold">
-                <i className="fas fa-user-shield ml-2"></i>
-                "يا بطل، المنصة مراقبة أمنياً.. ذاكر بتركيز وبالتوفيق!"
+        {/* تنبيه أمني أسفل الصفحة */}
+        <div className="mt-10 p-6 glass border-blue-500/20 rounded-3xl text-center">
+            <p className="text-blue-400 text-xs font-bold">
+                🔒 نظام الحماية مفعل بالكامل | مطور بواسطة م. عمر عبد التواب
             </p>
         </div>
     </div>
 )}
+
+
 
                     
 
@@ -858,7 +947,22 @@ useEffect(() => {
                                 
                                 <input onChange={(e) => setStudent({...student, phone: e.target.value})} type="tel" placeholder="رقم الهاتف" className="w-full bg-white/5 border border-white/10 p-4 rounded-2xl mb-4 text-white outline-none focus:border-orange-500" />
                                 
-                                <input onChange={(e) => setStudent({...student, code: e.target.value})} type="text" placeholder="كود التفعيل (🔑)" className="w-full bg-white/5 border border-orange-500/50 p-4 rounded-2xl mb-4 text-orange-500 font-bold outline-none focus:border-orange-500" />
+{/* إظهار خانة الكود فقط إذا لم يكن الدخول مجانياً */}
+{!isFreeMode && (
+    <input 
+        onChange={(e) => setStudent({...student, code: e.target.value})} 
+        type="text" 
+        placeholder="كود التفعيل (🔑)" 
+        className="w-full bg-white/5 border border-orange-500/50 p-4 rounded-2xl mb-4 text-orange-500 font-bold outline-none focus:border-orange-500 animate-pulse" 
+    />
+)}
+
+{/* تنبيه بسيط للمجاني */}
+{isFreeMode && (
+    <div className="text-green-500 text-xs text-center mb-4 font-bold border border-green-500/20 p-2 rounded-xl bg-green-500/5">
+        ✨ القسم ده مجاني.. سجل بياناتك وابدأ فوراً! ✨
+    </div>
+)}
 
                                 <select onChange={(e) => setStudent({...student, level: e.target.value})} className="w-full bg-white/5 border border-white/10 p-4 rounded-2xl mb-6 text-gray-400 outline-none">
                                     <option value="">اختر الفرقة</option>
@@ -890,16 +994,32 @@ useEffect(() => {
             );
         }
 
-        function Card({ title, icon, color, onClick }) {
-            return (
-                <div onClick={onClick} className="glass p-10 rounded-[40px] text-center cursor-pointer relative overflow-hidden group hover:-translate-y-4 transition-all duration-500">
-                    <div className="absolute top-0 left-0 w-full h-1.5 moving-line"></div>
-                    <i className={`fas ${icon} text-5xl mb-6`} style={{ color }}></i>
-                    <h3 className="text-xl font-bold mb-4">{title}</h3>
-                    <div className="text-xs text-gray-400 group-hover:text-orange-500 transition">اضغط للدخول</div>
+   function Card({ title, icon, color, onClick, isFree }) {
+    return (
+        <div onClick={onClick} className="glass p-10 rounded-[40px] text-center cursor-pointer relative overflow-hidden group hover:-translate-y-4 transition-all duration-500">
+            {/* خط الحركة العلوي */}
+            <div className="absolute top-0 left-0 w-full h-1.5 moving-line"></div>
+            
+            {/* علامة "مجاني" النيون */}
+            {isFree && (
+                <div className="absolute top-4 right-[-35px] bg-green-600 text-[10px] text-white px-10 py-1 rotate-45 font-black shadow-lg z-20">
+                    FREE
                 </div>
-            );
-        }
+            )}
+
+            <i className={`fas ${icon} text-5xl mb-6 transition-transform group-hover:scale-110`} style={{ color }}></i>
+            <h3 className="text-xl font-bold mb-4">{title}</h3>
+            
+            <div className="text-xs text-gray-400 group-hover:text-orange-500 transition">
+                {isFree ? (
+                    <span className="text-green-500 font-bold underline">دخول مجاني الآن ✅</span>
+                ) : (
+                    "اضغط للدخول آمن"
+                )}
+            </div>
+        </div>
+    );
+}
 
         const root = ReactDOM.createRoot(document.getElementById('root'));
         root.render(<AcademyApp />);
